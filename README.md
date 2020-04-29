@@ -2,7 +2,7 @@
 
 ## Course
 
-This project was built to teach the [React State](#) for Frontend Masters.
+This project was built to teach the [React State](#)
 
 ## The Basics
 
