@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useReducer } from 'react';
 import ReactDOM from 'react-dom';
 
 import { BrowserRouter as Router } from 'react-router-dom';
@@ -9,40 +9,69 @@ import CharacterList from './CharacterList';
 import endpoint from './endpoint';
 import './styles.scss';
 
+const initialState = {
+  response: null,
+  loading: false,
+  error: null,
+};
+
+const LOADING = 'LOADING';
+const RESPONSE_COMPLETE = 'RESPONSE_COMPLETE';
+const ERROR = 'ERROR';
+
+const reducer = (state, action) => {
+  if (action.type === LOADING) {
+    return {
+      response: null,
+      loading: true,
+      error: null,
+    };
+  }
+
+  if (action.type === RESPONSE_COMPLETE) {
+    return {
+      response: action.payload.data,
+      loading: false,
+      error: null,
+    };
+  }
+
+  if (action.type === ERROR) {
+    return {
+      response: null,
+      loading: false,
+      error: action.payload.error,
+    };
+  }
+  return state;
+};
+
 const useFetch = url => {
-  const [response, setResponse] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
-    setResponse([]);
-    setLoading(true);
-    setError(null);
+    dispatch({
+      type: LOADING,
+    });
 
     const fetchUrl = async url => {
       try {
         const res = await fetch(url);
         const data = await res.json();
-        setResponse(data);
+        dispatch({
+          type: RESPONSE_COMPLETE,
+          payload: { data },
+        });
       } catch (error) {
-        setError(error);
-      } finally {
-        setLoading(false);
+        dispatch({
+          type: ERROR,
+          payload: { error },
+        });
       }
     };
     fetchUrl(url + '/characters');
-    // fetch(url + '/characters')
-    //   .then(res => res.json())
-    //   .then(data => {
-    //     setResponse(data);
-    //     setLoading(false);
-    //   })
-    //   .catch(error => {
-    //     setError(error);
-    //     setLoading(false);
-    //   });
   }, [url]);
-  return [response, loading, error];
+  return [state.response, state.loading, state.error];
 };
 const Application = () => {
   const [response, loading, error] = useFetch(endpoint);
